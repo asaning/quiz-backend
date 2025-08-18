@@ -1,3 +1,4 @@
+import os
 import random
 import string
 import uuid
@@ -18,7 +19,8 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 # DynamoDB client
-dynamodb = boto3.resource("dynamodb")
+region = os.environ.get("AWS_REGION", "us-east-1")
+dynamodb = boto3.resource("dynamodb", region_name=region)
 captcha_table = dynamodb.Table("Captcha")
 
 
