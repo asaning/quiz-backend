@@ -23,7 +23,7 @@ app = FastAPI(
 )
 
 # Include CAPTCHA router
-app.include_router(captcha, prefix="/captcha")
+app.include_router(captcha.router, prefix="/api")
 
 
 @app.get("/health")

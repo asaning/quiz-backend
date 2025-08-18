@@ -1,5 +1,6 @@
 import random
 import string
+import uuid
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 from PIL import Image, ImageDraw, ImageFont
@@ -9,6 +10,8 @@ import boto3
 from botocore.exceptions import ClientError
 from datetime import datetime, timedelta
 import logging
+
+from models.schema import ApiResponse
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -47,11 +50,11 @@ def generate_captcha_image(text: str) -> str:
     return base64.b64encode(buffer.getvalue()).decode("utf-8")
 
 
-@router.get("/")
+@router.get("/captcha", response_model=ApiResponse)
 async def get_captcha():
     # Generate a 6-character CAPTCHA text
     captcha_text = "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
-    captcha_id = "".join(random.choices(string.ascii_lowercase + string.digits, k=10))
+    captcha_id = str(uuid.uuid4())
 
     # Store in DynamoDB with 5-minute expiration
     expiration = int((datetime.now() + timedelta(minutes=5)).timestamp())
@@ -71,6 +74,11 @@ async def get_captcha():
     # Generate CAPTCHA image
     image_base64 = generate_captcha_image(captcha_text)
 
-    return JSONResponse(
-        {"captcha_id": captcha_id, "image": f"data:image/png;base64,{image_base64}"}
+    return ApiResponse(
+        code=200,
+        message="CAPTCHA generated successfully",
+        data={
+            "captcha_id": captcha_id,
+            "image": f"data:image/png;base64,{image_base64}",
+        },
     )
