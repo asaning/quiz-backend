@@ -60,7 +60,7 @@ jobs:
       - name: Build, tag, and push image to ECR
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: fastapi-app
+          ECR_REPOSITORY: waikato/quiz
           IMAGE_TAG: latest
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
@@ -82,7 +82,7 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
-            docker pull ${{ secrets.ECR_REGISTRY }}/fastapi-app:latest
-            docker stop fastapi-app || true
-            docker rm fastapi-app || true
-            docker run -d --name fastapi-app -p 8000:8000 ${{ secrets.ECR_REGISTRY }}/fastapi-app:latest
+            docker pull ${{ secrets.ECR_REGISTRY }}/waikato/quiz:latest
+            docker stop quiz-app || true
+            docker rm quiz-app || true
+            docker run -d --name quiz-app -p 8000:8000 ${{ secrets.ECR_REGISTRY }}/waikato/quiz:latest
