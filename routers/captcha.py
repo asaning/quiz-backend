@@ -2,7 +2,6 @@ import random
 import string
 import uuid
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import JSONResponse
 from PIL import Image, ImageDraw, ImageFont
 import base64
 from io import BytesIO
