@@ -21,10 +21,10 @@ app = FastAPI(
 )
 
 
-@app.get("/", tags=["root"])
-async def root():
-    logger.info(f"Root endpoint accessed at {datetime.now()}")
-    return {"message": "Welcome to the Quiz Backend API"}
+@app.get("/health")
+async def health_check():
+    logger.info(f"Health check endpoint accessed at {datetime.now()}")
+    return {"status": "healthy"}
 
 
 if __name__ == "__main__":
