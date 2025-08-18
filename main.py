@@ -3,6 +3,8 @@ import logging
 from fastapi import FastAPI
 import uvicorn
 
+from routers import captcha
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -19,6 +21,9 @@ app = FastAPI(
         {"name": "questions", "description": "Operations with questions"},
     ],
 )
+
+# Include CAPTCHA router
+app.include_router(captcha, prefix="/captcha")
 
 
 @app.get("/health")
