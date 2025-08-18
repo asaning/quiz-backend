@@ -82,7 +82,7 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
-            docker pull ${{ secrets.ECR_REGISTRY }}/waikato/quiz:latest
+            docker pull ${{ secrets.ECR_REGISTRY }}:latest
             docker stop quiz-app || true
             docker rm quiz-app || true
-            docker run -d --name quiz-app -p 8000:8000 ${{ secrets.ECR_REGISTRY }}/waikato/quiz:latest
+            docker run -d --name quiz-app -p 8000:8000 ${{ secrets.ECR_REGISTRY }}:latest
