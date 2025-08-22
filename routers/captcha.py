@@ -6,22 +6,17 @@ from fastapi import APIRouter, HTTPException
 from PIL import Image, ImageDraw, ImageFont
 import base64
 from io import BytesIO
-import boto3
 from botocore.exceptions import ClientError
 from datetime import datetime, timedelta
 import logging
 
 from models.schema import ApiResponse
+from utils.aws_client import ddb_captcha
 
 # Configure logging
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
-
-# DynamoDB client
-region = os.environ.get("AWS_REGION", "us-east-1")
-dynamodb = boto3.resource("dynamodb", region_name=region)
-captcha_table = dynamodb.Table("Captcha")
 
 
 # Generate CAPTCHA image
@@ -51,7 +46,7 @@ def generate_captcha_image(text: str) -> str:
     return base64.b64encode(buffer.getvalue()).decode("utf-8")
 
 
-@router.get("/captcha", response_model=ApiResponse)
+@router.get("/", response_model=ApiResponse)
 async def get_captcha():
     # Generate a 6-character CAPTCHA text
     captcha_text = "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
@@ -60,7 +55,7 @@ async def get_captcha():
     # Store in DynamoDB with 5-minute expiration
     expiration = int((datetime.now() + timedelta(minutes=5)).timestamp())
     try:
-        captcha_table.put_item(
+        ddb_captcha.put_item(
             Item={
                 "captcha_id": captcha_id,
                 "captcha": captcha_text,
