@@ -45,12 +45,39 @@ def send_email_code(body: SendEmailCodeIn):
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
-            body {{ font-family: Arial, sans-serif; color: #333; line-height: 1.6; margin: 0; padding: 0; }}
-            .container {{ max-width: 600px; margin: 20px auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px; }}
-            .header {{ background-color: #f8f8f8; padding: 15px; text-align: center; border-bottom: 1px solid #e0e0e0; }}
+            body {{
+                font-family: Arial, sans-serif;
+                color: #333;
+                line-height: 1.6;
+                margin: 0;
+                padding: 0;
+            }}
+            .container {{
+                max-width: 600px;
+                margin: 20px auto;
+                padding: 20px;
+                border: 1px solid #e0e0e0;
+                border-radius: 8px;
+            }}
+            .header {{
+                background-color: #f8f8f8;
+                padding: 15px;
+                text-align: center;
+                border-bottom: 1px solid #e0e0e0;
+            }}
             .content {{ padding: 20px; text-align: center; }}
-            .code {{ font-size: 24px; font-weight: bold; color: #007bff; margin: 20px 0; }}
-            .footer {{ font-size: 12px; color: #777; text-align: center; margin-top: 20px; }}
+            .code {{
+                font-size: 24px;
+                font-weight: bold;
+                color: #007bff;
+                margin: 20px 0;
+            }}
+            .footer {{
+                font-size: 12px;
+                color: #777;
+                text-align: center;
+                margin-top: 20px;
+            }}
         </style>
     </head>
     <body>

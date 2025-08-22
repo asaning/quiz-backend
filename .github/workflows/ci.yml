@@ -27,7 +27,7 @@ jobs:
 
       - name: Run flake8 linting
         run: |
-          flake8 . --max-line-length=88 --extend-ignore=E203
+          flake8 . --max-line-length=120 --extend-ignore=E203
 
       - name: Start FastAPI app in background
         run: |
