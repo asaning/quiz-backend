@@ -4,7 +4,7 @@ from typing import Any, Optional
 
 class ApiResponse(BaseModel):
     code: int
-    message: str
+    message: Optional[str] = "Success"
     data: Optional[Any] = None
 
 
