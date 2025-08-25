@@ -17,7 +17,7 @@ def _gen_code() -> str:
     return f"{randint(0, 999999):06d}"
 
 
-@router.post("/", response_model=ApiResponse)
+@router.post("/send/", response_model=ApiResponse)
 def send_email_code(body: SendEmailCodeIn):
     now = datetime.now(timezone.utc)
     exp = now + timedelta(minutes=CODE_TTL_MINUTES)

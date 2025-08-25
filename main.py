@@ -35,10 +35,10 @@ ALGORITHM = "HS256"
 async def auth_middleware(request: Request, call_next):
     # Skip middleware for public endpoints
     if request.url.path in [
-        "/api/send_email_code",
-        "/api/user/register",
-        "/api/user/login",
-        "/api/captcha",
+        "/email/send",
+        "/user/register",
+        "/user/login",
+        "/captcha/get",
         "/health",
         "/docs",
         "/redoc",

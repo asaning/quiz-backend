@@ -45,7 +45,7 @@ def generate_captcha_image(text: str) -> str:
     return base64.b64encode(buffer.getvalue()).decode("utf-8")
 
 
-@router.get("/", response_model=ApiResponse)
+@router.get("/get", response_model=ApiResponse)
 async def get_captcha():
     # Generate a 6-character CAPTCHA text
     captcha_text = "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
@@ -71,7 +71,6 @@ async def get_captcha():
 
     return ApiResponse(
         code=200,
-        message="CAPTCHA generated successfully",
         data={
             "captcha_id": captcha_id,
             "image": f"data:image/png;base64,{image_base64}",
