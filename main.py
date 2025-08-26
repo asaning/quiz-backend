@@ -2,6 +2,7 @@ from datetime import datetime
 import logging
 import os
 from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from jose import JWTError, jwt
 import uvicorn
 
@@ -74,9 +75,17 @@ app.include_router(quiz.router, prefix="/quiz", tags=["quiz"])
 
 
 @app.exception_handler(AppException)
-async def app_exception_handler(request: Request, exc: AppException) -> ApiResponse:
+async def app_exception_handler(request: Request, exc: AppException) -> JSONResponse:
     logger.error(f"request: {request.url.path} - Exception: {exc.message}")
-    return ApiResponse(code=exc.code, message=exc.message, data=None)
+    api_response = ApiResponse(code=exc.code, message=exc.message, data=None)
+    return JSONResponse(status_code=200, content=api_response.model_dump())
+
+
+@app.exception_handler(Exception)
+async def general_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    logger.error(f"request: {request.url.path} - Unhandled Exception: {str(exc)}")
+    api_response = ApiResponse(code=5000, message="Internal server error", data=None)
+    return JSONResponse(status_code=200, content=api_response.model_dump())
 
 
 @app.get("/health")

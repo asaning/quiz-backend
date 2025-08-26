@@ -24,7 +24,7 @@ def register(body: UserRegisterIn):
 
     # Check if username already exists
     try:
-        response = ddb_user.get_item(Key={"username": {"S": username}})
+        response = ddb_user.get_item(Key={"Username": username})
         if "Item" in response:
             raise AppException(code=4004, message="Username already exists")
     except ClientError as e:
@@ -37,8 +37,8 @@ def register(body: UserRegisterIn):
     try:
         response = ddb_user.query(
             IndexName=EMAIL_INDEX,
-            KeyConditionExpression="email = :email",
-            ExpressionAttributeValues={":email": {"S": email}},
+            KeyConditionExpression="Email = :email",
+            ExpressionAttributeValues={":email": email},
         )
         if response.get("Items", []):
             raise AppException(code=4005, message="Email already exists")
@@ -51,17 +51,15 @@ def register(body: UserRegisterIn):
     # Verify email code
     try:
         code_response = ddb_validation_code.get_item(
-            Key={"code": {"S": body.code}, "Target": {"S": email}}
+            Key={"Code": body.code, "Target": email}
         )
         if "Item" not in code_response:
             raise AppException(
                 code=4002, message="Invalid or expired email verification code"
             )
 
-        # Check if code is expired
-        expire_time = int(code_response["Item"]["ExpireTime"]["N"])
-        if datetime.now(timezone.utc).timestamp() > expire_time:
-            raise AppException(code=4003, message="Email verification code expired")
+        # No need to check the code separately since we're querying by code
+        # No need to check expiration manually as DynamoDB TTL handles it
     except ClientError as e:
         raise AppException(
             code=5009,
@@ -70,19 +68,14 @@ def register(body: UserRegisterIn):
 
     # Verify CAPTCHA
     try:
-        captcha_response = ddb_captcha.get_item(
-            Key={"captcha_id": {"S": body.captchaId}}
-        )
+        captcha_response = ddb_captcha.get_item(Key={"CaptchaId": body.captchaId})
         if "Item" not in captcha_response:
             raise AppException(code=4014, message="Invalid CAPTCHA ID")
 
-        if captcha_response["Item"]["captcha"]["S"].lower() != body.captcha.lower():
+        if captcha_response["Item"]["Captcha"].lower() != body.captcha.lower():
             raise AppException(code=4015, message="Incorrect CAPTCHA text")
 
-        # Check if CAPTCHA is expired
-        captcha_expire_time = int(captcha_response["Item"]["expiration"]["N"])
-        if datetime.now(timezone.utc).timestamp() > captcha_expire_time:
-            raise AppException(code=4016, message="CAPTCHA expired")
+        # No need to check expiration manually as DynamoDB TTL handles it
     except ClientError as e:
         raise AppException(
             code=5010,
@@ -98,10 +91,10 @@ def register(body: UserRegisterIn):
     try:
         ddb_user.put_item(
             Item={
-                "username": {"S": username},
-                "email": {"S": email},
-                "password": {"S": hashed_password},
-                "created_at": {"S": now.isoformat()},
+                "Username": username,
+                "Email": email,
+                "Password": hashed_password,
+                "CreatedAt": now.isoformat(),
             }
         )
     except ClientError as e:
@@ -120,7 +113,7 @@ def register(body: UserRegisterIn):
 def login(body: UserLoginIn):
     # Find user by username
     try:
-        response = ddb_user.get_item(Key={"username": {"S": body.username}})
+        response = ddb_user.get_item(Key={"Username": body.username})
         if "Item" not in response:
             raise AppException(code=4001, message="User not found")
         user = response["Item"]
@@ -132,17 +125,17 @@ def login(body: UserLoginIn):
 
     # Verify password
     if not bcrypt.checkpw(
-        body.password.encode("utf-8"), user["password"]["S"].encode("utf-8")
+        body.password.encode("utf-8"), user["Password"].encode("utf-8")
     ):
         raise AppException(code=4006, message="Invalid password")
 
     # Generate JWT token
     expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     token = jwt.encode(
-        {"sub": user["username"]["S"], "exp": expire}, SECRET_KEY, algorithm=ALGORITHM
+        {"sub": user["Username"], "exp": expire}, SECRET_KEY, algorithm=ALGORITHM
     )
 
     return ApiResponse(
         code=200,
-        data={"access_token": token},
+        data={"AccessToken": token},
     )

@@ -1,7 +1,7 @@
 import random
 import string
 import uuid
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from PIL import Image, ImageDraw, ImageFont
 import base64
 from io import BytesIO
@@ -11,6 +11,7 @@ import logging
 
 from models.schema import ApiResponse
 from utils.aws_client import ddb_captcha
+from utils.exceptions import AppException
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -93,15 +94,15 @@ async def get_captcha():
     try:
         ddb_captcha.put_item(
             Item={
-                "captcha_id": captcha_id,
-                "captcha": captcha_text,
-                "expiration": expiration,
+                "CaptchaId": captcha_id,
+                "Captcha": captcha_text,
+                "Expiration": expiration,
             }
         )
         logger.info(f"Stored CAPTCHA: ID={captcha_id}, Answer={captcha_text}")
     except ClientError as e:
         logger.error(f"Failed to store CAPTCHA: {e}")
-        raise HTTPException(status_code=500, detail="Failed to store CAPTCHA")
+        raise AppException(code=5011, message="Failed to store CAPTCHA")
 
     # Generate CAPTCHA image
     image_base64 = generate_captcha_image(captcha_text)
@@ -109,7 +110,7 @@ async def get_captcha():
     return ApiResponse(
         code=200,
         data={
-            "captcha_id": captcha_id,
-            "image": f"data:image/png;base64,{image_base64}",
+            "CaptchaId": captcha_id,
+            "Image": f"data:image/png;base64,{image_base64}",
         },
     )
