@@ -30,4 +30,7 @@ def get_jwt_secret():
     except Exception as e:
         # In local dev or if AWS creds aren’t configured
         print(f"[WARN] Falling back to default JWT secret: {e}")
-        return None
+        return "4pOQjtnsh1Xa8yIfZzCaAvscHjvGekDunQjCR9abl10"
+
+
+ALGORITHM = "HS256"

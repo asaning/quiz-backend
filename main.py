@@ -1,6 +1,5 @@
 from datetime import datetime
 import logging
-import os
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from jose import JWTError, jwt
@@ -8,6 +7,7 @@ import uvicorn
 
 from models.schema import ApiResponse
 from routers import captcha, email, quiz, user
+from utils.aws_client import ALGORITHM, get_jwt_secret
 from utils.exceptions import AppException
 
 logging.basicConfig(
@@ -27,9 +27,7 @@ app = FastAPI(
     ],
 )
 
-# JWT configuration
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", "your-secret-key")  # Change in production
-ALGORITHM = "HS256"
+SECRET_KEY = get_jwt_secret()
 
 
 # Middleware to check JWT token
@@ -40,6 +38,7 @@ async def auth_middleware(request: Request, call_next):
         "/user/register",
         "/user/login",
         "/captcha/get",
+        "/quiz/list",
         "/health",
         "/docs",
         "/redoc",

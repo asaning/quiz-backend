@@ -1,8 +1,13 @@
 from fastapi import APIRouter
 from datetime import datetime, timezone, timedelta
-import os
 from botocore.exceptions import ClientError
-from utils.aws_client import ddb_user, ddb_validation_code, ddb_captcha, get_jwt_secret
+from utils.aws_client import (
+    ALGORITHM,
+    ddb_user,
+    ddb_validation_code,
+    ddb_captcha,
+    get_jwt_secret,
+)
 from utils.exceptions import AppException
 import bcrypt
 from jose import jwt
@@ -10,9 +15,7 @@ from models.schema import ApiResponse, UserRegisterIn, UserLoginIn
 
 router = APIRouter()
 
-EMAIL_INDEX = os.getenv("EMAIL_INDEX", "EmailIndex")
-SECRET_KEY = get_jwt_secret() or "4pOQjtnsh1Xa8yIfZzCaAvscHjvGekDunQjCR9abl10="
-ALGORITHM = "HS256"
+SECRET_KEY = get_jwt_secret()
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 
@@ -36,7 +39,7 @@ def register(body: UserRegisterIn):
     # Check if email already exists (using GSI)
     try:
         response = ddb_user.query(
-            IndexName=EMAIL_INDEX,
+            IndexName="EmailIndex",
             KeyConditionExpression="Email = :email",
             ExpressionAttributeValues={":email": email},
         )
