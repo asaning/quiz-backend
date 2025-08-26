@@ -1,5 +1,5 @@
 import logging
-from fastapi import APIRouter, logger
+from fastapi import APIRouter
 from datetime import datetime, timedelta, timezone
 from random import randint
 import os
