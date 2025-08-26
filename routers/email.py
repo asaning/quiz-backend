@@ -1,4 +1,5 @@
-from fastapi import APIRouter
+import logging
+from fastapi import APIRouter, logger
 from datetime import datetime, timedelta, timezone
 from random import randint
 import os
@@ -9,8 +10,13 @@ from utils.exceptions import AppException
 
 router = APIRouter()
 
-SES_FROM = os.getenv("SES_FROM", "noreply@example.com")
+SES_FROM = os.getenv("SES_FROM", "asanchen798@gmail.com")
 CODE_TTL_MINUTES = int(os.getenv("APP_CODE_TTL_MINUTES", "5"))
+MIN_REQUEST_INTERVAL_SECONDS = int(
+    os.getenv("MIN_REQUEST_INTERVAL_SECONDS", "60")
+)  # Minimum 1 minute between requests
+
+logger = logging.getLogger(__name__)
 
 
 def _gen_code() -> str:
@@ -20,18 +26,57 @@ def _gen_code() -> str:
 @router.post("/send", response_model=ApiResponse)
 def send_email_code(body: SendEmailCodeIn):
     now = datetime.now(timezone.utc)
+
+    # Check if there's already a valid code for this email (DynamoDB TTL handles expiration)
+    try:
+        response = ddb_validation_code.get_item(Key={"Target": body.email})
+
+        if "Item" in response:
+            # If item exists, it means there's still a valid code (expired ones are auto-removed by TTL)
+            existing_code_time = response["Item"].get("CreatedTime", 0)
+
+            logger.info(f"Valid code already exists for {body.email}")
+
+            # Check rate limiting - prevent too frequent requests
+            if existing_code_time > 0:
+                time_since_last_request = int(now.timestamp()) - existing_code_time
+                if time_since_last_request < MIN_REQUEST_INTERVAL_SECONDS:
+                    remaining_wait = (
+                        MIN_REQUEST_INTERVAL_SECONDS - time_since_last_request
+                    )
+                    logger.info(
+                        f"Rate limit hit for {body.email}, need to wait {remaining_wait} seconds"
+                    )
+                    return ApiResponse(
+                        code=429,
+                        message=f"Please wait {remaining_wait} seconds before requesting another verification code.",
+                    )
+
+            return ApiResponse(
+                code=200,
+                message="A valid verification code already exists for this email.",
+            )
+
+    except ClientError as e:
+        # If the item doesn't exist or there's an error, continue with sending new code
+        logger.warning(
+            f"Error checking existing code for {body.email}: {e.response['Error']['Message']}"
+        )
+
     exp = now + timedelta(minutes=CODE_TTL_MINUTES)
     code = _gen_code()
 
-    # Save to DynamoDB
+    # Save to DynamoDB with creation timestamp
     try:
         ddb_validation_code.put_item(
             Item={
-                "code": {"S": code},
-                "Target": {"S": body.email.lower()},
-                "ExpireTime": {"N": str(int(exp.timestamp()))},
+                "Code": code,
+                "Target": body.email,
+                "ExpireTime": int(exp.timestamp()),
+                "CreatedTime": int(now.timestamp()),  # Track when the code was created
             },
         )
+
     except ClientError as e:
         raise AppException(
             code=5001, message=f"DynamoDB error: {e.response['Error']['Message']}"
