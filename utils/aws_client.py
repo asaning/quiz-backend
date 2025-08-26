@@ -1,3 +1,4 @@
+import json
 import os
 import boto3
 
@@ -18,3 +19,10 @@ ses = boto3.client(
 )
 
 s3 = boto3.client("s3", region_name=region)
+
+
+def get_jwt_secret():
+    client = boto3.client("secretsmanager", region_name=region)
+    resp = client.get_secret_value(SecretId="quiz-app/jwt")
+    secret = json.loads(resp["SecretString"])
+    return secret["JWT_SECRET_KEY"]

@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from datetime import datetime, timezone, timedelta
 import os
 from botocore.exceptions import ClientError
-from utils.aws_client import ddb_user, ddb_validation_code, ddb_captcha
+from utils.aws_client import ddb_user, ddb_validation_code, ddb_captcha, get_jwt_secret
 from utils.exceptions import AppException
 import bcrypt
 from jose import jwt
@@ -11,9 +11,7 @@ from models.schema import ApiResponse, UserRegisterIn, UserLoginIn
 router = APIRouter()
 
 EMAIL_INDEX = os.getenv("EMAIL_INDEX", "EmailIndex")
-SECRET_KEY = os.getenv(
-    "JWT_SECRET_KEY", "a1b2c3d4e5f67890abcdef1234567890abcdef1234567890abcdef1234567890"
-)  # Change in production
+SECRET_KEY = get_jwt_secret() or "4pOQjtnsh1Xa8yIfZzCaAvscHjvGekDunQjCR9abl10="
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
