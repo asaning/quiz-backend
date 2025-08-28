@@ -66,18 +66,9 @@ class QuizAnswerListParams(BaseModel):
 
 class QuizAnswerSubmitIn(BaseModel):
     answer: str
-    isCorrect: Optional[bool] = None
+    quizId: str
 
 
 class QuizAnswerBatchSubmitIn(BaseModel):
-    quizId: str
     answers: List[QuizAnswerSubmitIn]
-
-
-class QuizAnswerOut(BaseModel):
-    answerId: str
-    username: str
-    quizId: str
-    answer: str
-    createdAt: str
-    isCorrect: Optional[bool] = None
+    correctNumber: int
