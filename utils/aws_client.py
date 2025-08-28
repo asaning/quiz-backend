@@ -6,12 +6,14 @@ region = os.getenv("AWS_REGION", "us-east-1")
 dynamodb = boto3.resource("dynamodb", region_name=region)
 
 USER_TABLE = os.getenv("USER_TABLE", "User")
-TABLE_CAPTCHA = os.getenv("DDB_TABLE_CAPTCHA", "Captcha")
-TABLE_VALIDATION = os.getenv("DDB_TABLE_VALIDATION", "ValidationCode")
+CAPTCHA_TABLE = os.getenv("DDB_TABLE_CAPTCHA", "Captcha")
+VALIDATION_TABLE = os.getenv("DDB_TABLE_VALIDATION", "ValidationCode")
+QUIZ_TABLE = os.getenv("DDB_TABLE_QUIZ", "Quiz")
 
-ddb_captcha = dynamodb.Table(TABLE_CAPTCHA)
-ddb_validation_code = dynamodb.Table(TABLE_VALIDATION)
+ddb_captcha = dynamodb.Table(CAPTCHA_TABLE)
+ddb_validation_code = dynamodb.Table(VALIDATION_TABLE)
 ddb_user = dynamodb.Table(USER_TABLE)
+ddb_quiz = dynamodb.Table(QUIZ_TABLE)
 
 ses = boto3.client(
     "sesv2",
