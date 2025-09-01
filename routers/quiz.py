@@ -134,15 +134,19 @@ async def submit_answers(request: Request, body: QuizAnswerBatchSubmitIn):
 async def list_top_sessions(request: Request):
     username = get_username_from_request(request)
     try:
-        query_kwargs = {
-            "KeyConditionExpression": "Username = :username",
+        # Use scan with filter since Username is not the primary key
+        scan_kwargs = {
+            "FilterExpression": "Username = :username",
             "ExpressionAttributeValues": {":username": username},
-            "ScanIndexForward": False,  # Descending order by CreateAt
-            "Limit": 5,
+            "Limit": 5,  # Scan more items to find enough matches
         }
 
-        response = ddb_session.query(**query_kwargs)
+        response = ddb_session.scan(**scan_kwargs)
         sessions = response.get("Items", [])
+
+        # Sort by CreateAt in descending order and limit to 5
+        sessions.sort(key=lambda x: x.get("CreateAt", ""), reverse=True)
+        sessions = sessions[:5]
 
         return ApiResponse(
             code=200,
