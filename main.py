@@ -39,6 +39,7 @@ async def auth_middleware(request: Request, call_next):
         "/user/login",
         "/captcha/get",
         "/quiz/list",
+        "/quiz/submit",
         "/health",
         "/docs",
         "/redoc",

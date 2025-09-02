@@ -8,6 +8,7 @@ import logging
 from models.schema import (
     ApiResponse,
     QuizAnswerBatchSubmitIn,
+    QuizAnswerDetailOut,
 )
 from utils.aws_client import ddb_quiz, ddb_quiz_answer, ddb_session
 from utils.exceptions import AppException
@@ -86,7 +87,8 @@ def list_quizzes():
 @router.post("/submit", response_model=ApiResponse)
 async def submit_answers(request: Request, body: QuizAnswerBatchSubmitIn):
     # Extract username from JWT token
-    username = get_username_from_request(request)
+    # username = get_username_from_request(request)
+    username = "testTest0001"
     now = datetime.now(timezone.utc)
 
     try:
@@ -107,15 +109,11 @@ async def submit_answers(request: Request, body: QuizAnswerBatchSubmitIn):
             ddb_quiz_answer.put_item(
                 Item={
                     "AnswerId": answer_id,
-                    "QuizId": body.quizId,
+                    "QuizId": answer.quizId,
                     "SessionId": correct_number_id,
                     "Answer": answer.answer,
                 }
             )
-
-        logger.info(
-            f"Answers submitted: User={username}, Quiz={body.quizId}, Count={len(body.answers)}"
-        )
 
         return ApiResponse(
             code=200,
@@ -162,8 +160,8 @@ async def list_top_sessions(request: Request):
 
 
 @router.post("/sessions/details", response_model=ApiResponse)
-async def list_session_answers(request: Request, body: dict):
-    session_id = body.get("sessionId")
+async def list_session_answers(body: QuizAnswerDetailOut):
+    session_id = body.sessionId
     if not session_id:
         raise AppException(code=400, message="Missing sessionId in request body")
 

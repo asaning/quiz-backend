@@ -72,3 +72,7 @@ class QuizAnswerSubmitIn(BaseModel):
 class QuizAnswerBatchSubmitIn(BaseModel):
     answers: List[QuizAnswerSubmitIn]
     correctNumber: int
+
+
+class QuizAnswerDetailOut(BaseModel):
+    sessionId: str
