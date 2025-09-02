@@ -29,6 +29,17 @@ class UserLoginIn(BaseModel):
     password: str
 
 
+class PasswordChangeIn(BaseModel):
+    password: str
+    newPassword: str
+
+
+class PasswordForgetIn(BaseModel):
+    email: EmailStr
+    code: str
+    newPassword: str
+
+
 class QuizListParams(BaseModel):
     pageNumber: int = 1
     pageSize: int = 10

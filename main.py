@@ -37,6 +37,7 @@ async def auth_middleware(request: Request, call_next):
         "/email/send",
         "/user/register",
         "/user/login",
+        "/user/password/forget",
         "/captcha/get",
         "/health",
         "/docs",

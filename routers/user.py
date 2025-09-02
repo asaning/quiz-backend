@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from datetime import datetime, timezone, timedelta
 from botocore.exceptions import ClientError
 from utils.aws_client import (
@@ -9,9 +9,16 @@ from utils.aws_client import (
     get_jwt_secret,
 )
 from utils.exceptions import AppException
+from utils.auth import get_username_from_request
 import bcrypt
 from jose import jwt
-from models.schema import ApiResponse, UserRegisterIn, UserLoginIn
+from models.schema import (
+    ApiResponse,
+    UserRegisterIn,
+    UserLoginIn,
+    PasswordChangeIn,
+    PasswordForgetIn,
+)
 
 router = APIRouter()
 
@@ -141,4 +148,101 @@ def login(body: UserLoginIn):
     return ApiResponse(
         code=200,
         data={"AccessToken": token},
+    )
+
+
+@router.post("/password/reset", response_model=ApiResponse)
+async def reset_password(request: Request, body: PasswordChangeIn):
+    # Get username from JWT token
+    username = get_username_from_request(request)
+
+    try:
+        # Find user by username
+        response = ddb_user.get_item(Key={"Username": username})
+        if "Item" not in response:
+            raise AppException(code=4001, message="User not found")
+        user = response["Item"]
+
+        # Verify current password
+        if not bcrypt.checkpw(
+            body.password.encode("utf-8"), user["Password"].encode("utf-8")
+        ):
+            raise AppException(code=4006, message="Current password is incorrect")
+
+        # Hash new password
+        hashed_new_password = bcrypt.hashpw(
+            body.newPassword.encode("utf-8"), bcrypt.gensalt()
+        ).decode("utf-8")
+
+        # Update password in DynamoDB
+        ddb_user.update_item(
+            Key={"Username": username},
+            UpdateExpression="SET Password = :password",
+            ExpressionAttributeValues={
+                ":password": hashed_new_password,
+            },
+        )
+
+    except ClientError as e:
+        raise AppException(
+            code=5015,
+            message=f"DynamoDB error (change password): {e.response['Error']['Message']}",
+        )
+
+    return ApiResponse(
+        code=200,
+        message="Password changed successfully",
+    )
+
+
+@router.post("/password/forget", response_model=ApiResponse)
+def forget_password(body: PasswordForgetIn):
+    try:
+        # Verify email code
+        code_response = ddb_validation_code.get_item(
+            Key={"Code": body.code, "Target": body.email}
+        )
+        if "Item" not in code_response:
+            raise AppException(
+                code=4002, message="Invalid or expired verification code"
+            )
+
+        # Find user by email using EmailIndex
+        user_response = ddb_user.query(
+            IndexName="EmailIndex",
+            KeyConditionExpression="Email = :email",
+            ExpressionAttributeValues={":email": body.email},
+        )
+        if not user_response.get("Items", []):
+            raise AppException(code=4016, message="Email not found")
+
+        user = user_response["Items"][0]
+        username = user["Username"]
+
+        # Hash new password
+        hashed_new_password = bcrypt.hashpw(
+            body.newPassword.encode("utf-8"), bcrypt.gensalt()
+        ).decode("utf-8")
+
+        # Update password in DynamoDB
+        ddb_user.update_item(
+            Key={"Username": username},
+            UpdateExpression="SET Password = :password",
+            ExpressionAttributeValues={
+                ":password": hashed_new_password,
+            },
+        )
+
+        # Delete used verification code
+        ddb_validation_code.delete_item(Key={"Code": body.code, "Target": body.email})
+
+    except ClientError as e:
+        raise AppException(
+            code=5016,
+            message=f"DynamoDB error (forget password): {e.response['Error']['Message']}",
+        )
+
+    return ApiResponse(
+        code=200,
+        message="Password reset successfully",
     )
