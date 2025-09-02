@@ -87,8 +87,7 @@ def list_quizzes():
 @router.post("/submit", response_model=ApiResponse)
 async def submit_answers(request: Request, body: QuizAnswerBatchSubmitIn):
     # Extract username from JWT token
-    # username = get_username_from_request(request)
-    username = "testTest0001"
+    username = get_username_from_request(request)
     now = datetime.now(timezone.utc)
 
     try:
@@ -166,12 +165,15 @@ async def list_session_answers(body: QuizAnswerDetailOut):
         raise AppException(code=400, message="Missing sessionId in request body")
 
     try:
-        query_kwargs = {
-            "KeyConditionExpression": "SessionId = :sessionId",
+        # Use scan with filter since SessionId is not the primary key
+        scan_kwargs = {
+            "FilterExpression": "SessionId = :sessionId",
             "ExpressionAttributeValues": {":sessionId": session_id},
         }
-        response = ddb_quiz_answer.query(**query_kwargs)
+        response = ddb_quiz_answer.scan(**scan_kwargs)
         answers = response.get("Items", [])
+
+        # Enrich answers with quiz details
         for answer in answers:
             quiz_id = answer.get("QuizId")
             if quiz_id:
