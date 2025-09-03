@@ -131,23 +131,21 @@ async def submit_answers(request: Request, body: QuizAnswerBatchSubmitIn):
 async def list_top_sessions(request: Request):
     username = get_username_from_request(request)
     try:
-        # Use scan with filter since Username is not the primary key
-        scan_kwargs = {
-            "FilterExpression": "Username = :username",
+        # Query using GSI: Username-CreateAt-Index
+        query_kwargs = {
+            "IndexName": "Username-CreateAt-Index",
+            "KeyConditionExpression": "Username = :username",
             "ExpressionAttributeValues": {":username": username},
-            "Limit": 5,  # Scan more items to find enough matches
+            "ScanIndexForward": False,  # Descending order by CreateAt
+            "Limit": 5,  # Top 5 sessions
         }
 
-        response = ddb_session.scan(**scan_kwargs)
-        sessions = response.get("Items", [])
-
-        # Sort by CreateAt in descending order and limit to 5
-        sessions.sort(key=lambda x: x.get("CreateAt", ""), reverse=True)
-        sessions = sessions[:5]
+        response = ddb_session.query(**query_kwargs)
+        top_sessions = response.get("Items", [])
 
         return ApiResponse(
             code=200,
-            data=sessions,
+            data=top_sessions,
         )
 
     except ClientError as e:
