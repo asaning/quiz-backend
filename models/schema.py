@@ -1,8 +1,5 @@
 from pydantic import BaseModel, EmailStr
 from typing import Any, Optional, List
-from pydantic import field_validator
-
-from utils.exceptions import AppException
 
 
 class ApiResponse(BaseModel):
