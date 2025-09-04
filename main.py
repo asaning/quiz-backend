@@ -44,7 +44,7 @@ async def auth_middleware(request: Request, call_next):
         "/redoc",
         "/openapi.json",
         "/favicon.ico",
-    ]:
+    ] or request.url.path.startswith("/share/view/"):
         return await call_next(request)
 
     # Check for Authorization header

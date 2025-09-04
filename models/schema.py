@@ -44,35 +44,11 @@ class QuizListParams(BaseModel):
     pageNumber: int = 1
     pageSize: int = 10
 
-    @field_validator("pageNumber")
-    def page_number_must_be_positive(cls, v):
-        if v < 1:
-            raise AppException("pageNumber must be greater than 0")
-        return v
-
-    @field_validator("pageSize")
-    def page_size_must_be_in_range(cls, v):
-        if v < 5 or v > 20:
-            raise AppException("pageSize must be between 5 and 20")
-        return v
-
 
 class QuizAnswerListParams(BaseModel):
     pageNumber: int = 1
     pageSize: int = 10
     isCorrect: Optional[bool] = None
-
-    @field_validator("pageNumber")
-    def page_number_must_be_positive(cls, v):
-        if v < 1:
-            raise AppException("pageNumber must be greater than 0")
-        return v
-
-    @field_validator("pageSize")
-    def page_size_must_be_in_range(cls, v):
-        if v < 5 or v > 20:
-            raise AppException("pageSize must be between 5 and 20")
-        return v
 
 
 class QuizAnswerSubmitIn(BaseModel):
@@ -87,3 +63,10 @@ class QuizAnswerBatchSubmitIn(BaseModel):
 
 class QuizAnswerDetailOut(BaseModel):
     sessionId: str
+
+
+class ShareLinkCreateIn(BaseModel):
+    correctNumber: int
+    totalNumber: int
+    category: Optional[str] = None
+    date: Optional[str] = None

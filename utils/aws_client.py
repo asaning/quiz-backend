@@ -11,6 +11,7 @@ ddb_user = dynamodb.Table("User")
 ddb_quiz = dynamodb.Table("Quiz")
 ddb_quiz_answer = dynamodb.Table("QuizAnswer")
 ddb_session = dynamodb.Table("Session")
+ddb_share_links = dynamodb.Table("ShareLinks")
 
 ses = boto3.client(
     "sesv2",

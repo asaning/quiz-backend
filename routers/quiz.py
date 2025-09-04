@@ -9,8 +9,9 @@ from models.schema import (
     ApiResponse,
     QuizAnswerBatchSubmitIn,
     QuizAnswerDetailOut,
+    ShareLinkCreateIn,
 )
-from utils.aws_client import ddb_quiz, ddb_quiz_answer, ddb_session
+from utils.aws_client import ddb_quiz, ddb_quiz_answer, ddb_session, ddb_share_links
 from utils.exceptions import AppException
 from utils.auth import get_username_from_request
 
@@ -189,3 +190,39 @@ async def list_session_answers(body: QuizAnswerDetailOut):
             code=5024,
             message=f"Failed to retrieve answers: {e.response['Error']['Message']}",
         )
+
+
+@router.post("/share/create", response_model=ApiResponse)
+def create_share_link(share_data: ShareLinkCreateIn, request: Request):
+    username = get_username_from_request(request)
+    share_id = str(uuid.uuid4())
+    current_time = datetime.now(timezone.utc).isoformat()
+    item = {
+        "ShareId": share_id,
+        "Username": username,
+        "CreatedAt": current_time,
+        "CorrectNumber": share_data.correctNumber,
+        "TotalNumber": share_data.totalNumber,
+        "Category": share_data.category,
+        "Date": share_data.date or current_time,
+    }
+    ddb_share_links.put_item(Item=item)
+    return ApiResponse(
+        code=200,
+        data={
+            "shareId": share_id,
+        },
+    )
+
+
+@router.get("/share/view/{share_id}", response_model=ApiResponse)
+def view_share_link(share_id: str):
+    if not share_id:
+        return ApiResponse(code=400, message="Missing shareId")
+    resp = ddb_share_links.get_item(Key={"ShareId": share_id})
+    if "Item" not in resp:
+        return ApiResponse(code=404, message="Share link not found")
+    return ApiResponse(
+        code=200,
+        data=resp["Item"],
+    )
