@@ -33,7 +33,8 @@ SECRET_KEY = get_jwt_secret()
 # Middleware to check JWT token
 async def auth_middleware(request: Request, call_next):
     # Skip middleware for public endpoints
-    if request.url.path in [
+    path = request.url.path
+    if path in [
         "/email/send",
         "/user/register",
         "/user/login",
@@ -44,7 +45,7 @@ async def auth_middleware(request: Request, call_next):
         "/redoc",
         "/openapi.json",
         "/favicon.ico",
-    ] or request.url.path.startswith("/share/view/"):
+    ] or path.startswith("/quiz/share/view/"):
         return await call_next(request)
 
     # Check for Authorization header
