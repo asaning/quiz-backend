@@ -226,3 +226,27 @@ def view_share_link(share_id: str):
         code=200,
         data=resp["Item"],
     )
+
+
+@router.get("/sessions/ranking", response_model=ApiResponse)
+def rank_sessions_by_correct_number():
+    try:
+        # Scan all session records
+        response = ddb_session.scan()
+        items = response.get("Items", [])
+        # Aggregate CorrectNumber by Username
+        user_scores = {}
+        for item in items:
+            username = item.get("Username")
+            correct = int(item.get("CorrectNumber", 0))
+            if username:
+                user_scores[username] = user_scores.get(username, 0) + correct
+        # Sort by accumulated CorrectNumber descending
+        ranking = [
+            {"username": u, "totalCorrect": c}
+            for u, c in sorted(user_scores.items(), key=lambda x: x[1], reverse=True)
+        ]
+        return ApiResponse(code=200, data=ranking)
+    except Exception as e:
+        logger.error(f"Error ranking sessions: {e}")
+        return ApiResponse(code=500, message="Failed to rank sessions")
