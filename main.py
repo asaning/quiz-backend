@@ -34,18 +34,23 @@ SECRET_KEY = get_jwt_secret()
 async def auth_middleware(request: Request, call_next):
     # Skip middleware for public endpoints
     path = request.url.path
-    if path in [
-        "/email/send",
-        "/user/register",
-        "/user/login",
-        "/user/password/forget",
-        "/captcha/get",
-        "/health",
-        "/docs",
-        "/redoc",
-        "/openapi.json",
-        "/favicon.ico",
-    ] or path.startswith("/quiz/share/view/"):
+    if (
+        path
+        in [
+            "/email/send",
+            "/user/register",
+            "/user/login",
+            "/user/password/forget",
+            "/captcha/get",
+            "/health",
+            "/docs",
+            "/redoc",
+            "/openapi.json",
+            "/favicon.ico",
+        ]
+        or path.startswith("/quiz/share/view/")
+        or path.startswith("/quiz/sessions/ranking")
+    ):
         return await call_next(request)
 
     # Check for Authorization header
