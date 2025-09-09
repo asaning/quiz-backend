@@ -246,7 +246,7 @@ def rank_sessions_by_correct_number():
             {"username": u, "totalCorrect": c}
             for u, c in sorted(user_scores.items(), key=lambda x: x[1], reverse=True)
         ]
-        return ApiResponse(code=200, data=ranking[10:])  # Top 10
+        return ApiResponse(code=200, data=ranking[:10])  # Top 10
     except Exception as e:
         logger.error(f"Error ranking sessions: {e}")
         return ApiResponse(code=500, message="Failed to rank sessions")
